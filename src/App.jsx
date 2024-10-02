@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  fetchTodos,
   addTodo,
-  updateTodo,
   deleteTodo,
+  fetchTodos,
   toggleCompleted,
+  updateTodo,
 } from "./redux/todo-slice";
 
-const App = () => {
-  const dispatch = useDispatch();
-  const { todos, loading } = useSelector((state) => state.todos);
-
-  const [newTodo, setNewTodo] = useState({ name: "", description: "" });
+function App() {
   const [editTodo, setEditTodo] = useState(null);
+  const [newTodo, setNewTodo] = useState({ name: "", description: "" });
+
+  const dispatch = useDispatch();
+  const { todos, loading, error } = useSelector((state) => state.todos);
 
   useEffect(() => {
     dispatch(fetchTodos());
@@ -39,7 +39,15 @@ const App = () => {
   };
 
   const handleDeleteTodo = (id) => {
-    dispatch(deleteTodo(id));
+    let isDeleted = confirm(
+      `¿Estás seguro de eliminar la tarea con el id ${id}?`
+    );
+
+    if (isDeleted) {
+      dispatch(deleteTodo(id));
+    } else {
+      return false;
+    }
   };
 
   const handleToggleCompleted = (todo) => {
@@ -47,52 +55,56 @@ const App = () => {
   };
 
   return (
-    <div className="container">
-      <h1>Todo List App</h1>
-      <div className="todo-form">
-        <input
-          type="text"
-          placeholder="Nombre de la tarea"
-          value={newTodo.name}
-          onChange={(e) => setNewTodo({ ...newTodo, name: e.target.value })}
-        />
-        <textarea
-          placeholder="Descripción"
-          value={newTodo.description}
-          onChange={(e) =>
-            setNewTodo({ ...newTodo, description: e.target.value })
-          }
-        ></textarea>
-        <button onClick={editTodo ? handleUpdateTodo : handleAddTodo}>
-          {editTodo ? "Actualizar Tarea" : "Agregar Tarea"}
-        </button>
+    <>
+      <div className="container">
+        <h1>Todo List App</h1>
+        <div className="todo-form">
+          <input
+            type="text"
+            placeholder="Nombre de la Tarea"
+            value={newTodo.name}
+            onChange={(e) => setNewTodo({ ...newTodo, name: e.target.value })}
+          />
+          <textarea
+            placeholder="Descripción"
+            value={newTodo.description}
+            onChange={(e) =>
+              setNewTodo({ ...newTodo, description: e.target.value })
+            }
+          ></textarea>
+          <button onClick={editTodo ? handleUpdateTodo : handleAddTodo}>
+            {editTodo ? "Actualizar Tarea" : "Agregar Tarea"}
+          </button>
+        </div>
+        {loading ? <p>Cargando...</p> : null}
+        {error ? <p>Error en la App 😵😵😵</p> : null}
+        <h2>Lista de Tareas por Hacer</h2>
+        <ul className="todo-list">
+          {todos.map((todo) => (
+            <li key={todo.id} className={todo.completed ? "completed" : ""}>
+              <div>
+                <h3>{todo.name}</h3>
+                <p>{todo.description}</p>
+                <p>Creada: {new Date(todo.created_at).toLocaleDateString()}</p>
+                <p>
+                  Actualizada: {new Date(todo.updated_at).toLocaleDateString()}
+                </p>
+                <div className="actions">
+                  <button onClick={() => handleToggleCompleted(todo)}>
+                    {todo.completed ? "Desmarcar" : "Marcar"}
+                  </button>
+                  <button onClick={() => handleEditTodo(todo)}>Editar</button>
+                  <button onClick={() => handleDeleteTodo(todo.id)}>
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
-      {loading ? <p>Cargando...</p> : null}
-      <ul className="todo-list">
-        {todos.map((todo) => (
-          <li key={todo.id} className={todo.completed ? "completed" : ""}>
-            <div>
-              <h3>{todo.name}</h3>
-              <p>{todo.description}</p>
-              <p>Creado: {new Date(todo.created_at).toLocaleDateString()}</p>
-              <p>
-                Actualizado: {new Date(todo.updated_at).toLocaleDateString()}
-              </p>
-            </div>
-            <div className="actions">
-              <button onClick={() => handleToggleCompleted(todo)}>
-                {todo.completed ? "Desmarcar" : "Marcar"}
-              </button>
-              <button onClick={() => handleEditTodo(todo)}>Editar</button>
-              <button onClick={() => handleDeleteTodo(todo.id)}>
-                Eliminar
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+    </>
   );
-};
+}
 
 export default App;
